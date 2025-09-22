@@ -4,15 +4,13 @@ namespace Parziphal\Parse;
 
 use Closure;
 use DateTime;
-use Traversable;
+use Illuminate\Database\Eloquent\Collection;
 use LogicException;
-use Parse\ParseACL;
 use ReflectionClass;
 use Parse\ParseFile;
 use JsonSerializable;
 use Parse\ParseObject;
 use Illuminate\Support\Arr;
-use Parse\Internal\Encodable;
 use Illuminate\Support\Pluralizer;
 use Parziphal\Parse\Relations\HasOne;
 use Parziphal\Parse\Relations\HasMany;
@@ -473,7 +471,7 @@ abstract class ObjectModel implements Arrayable, Jsonable, JsonSerializable
         return json_encode($this->jsonSerialize(), $options);
     }
 
-    public function jsonSerialize()
+    public function jsonSerialize(): mixed
     {
         return $this->toArray();
     }

@@ -4,16 +4,15 @@ namespace Parziphal\Parse;
 
 use Parse\ParseClient;
 use Parziphal\Parse\SessionStorage;
-use Illuminate\Support\Facades\Auth;
-use Parziphal\Parse\ParseUserProvider;
+// use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\ServiceProvider;
 use Parziphal\Parse\Console\ModelMakeCommand;
-use Parziphal\Parse\Auth\Providers\UserProvider;
-use Laravel\Lumen\Application as LumenApplication;
-use Parziphal\Parse\Auth\Providers\AnyUserProvider;
-use Parziphal\Parse\Auth\Providers\FacebookUserProvider;
+// use Parziphal\Parse\Auth\Providers\UserProvider;
+// use Laravel\Lumen\Application as LumenApplication;
+// use Parziphal\Parse\Auth\Providers\AnyUserProvider;
+// use Parziphal\Parse\Auth\Providers\FacebookUserProvider;
 use Illuminate\Foundation\Application as LaravelApplication;
-use Parziphal\Parse\Auth\SessionGuard;
+// use Parziphal\Parse\Auth\SessionGuard;
 
 class ParseServiceProvider extends ServiceProvider
 {
@@ -42,9 +41,10 @@ class ParseServiceProvider extends ServiceProvider
 
         if ($this->app instanceof LaravelApplication && $this->app->runningInConsole()) {
             $this->publishes([$source => config_path('parse.php')], 'parse');
-        } elseif ($this->app instanceof LumenApplication) {
-            $this->app->configure('parse');
         }
+        //  elseif ($this->app instanceof LumenApplication) {
+        //     $this->app->configure('parse');
+        // }
 
         $this->mergeConfigFrom($source, 'parse');
     }
@@ -77,28 +77,28 @@ class ParseServiceProvider extends ServiceProvider
         ParseClient::setServerURL($config['server_url'], $config['mount_path']);
 
         // Register providers
-        Auth::provider('parse', function($app, array $config) {
-            return new UserProvider($config['model']);
-        });
+        // Auth::provider('parse', function($app, array $config) {
+        //     return new UserProvider($config['model']);
+        // });
 
-        Auth::provider('parse-facebook', function($app, array $config) {
-            return new FacebookUserProvider($config['model']);
-        });
+        // Auth::provider('parse-facebook', function($app, array $config) {
+        //     return new FacebookUserProvider($config['model']);
+        // });
 
-        Auth::provider('parse-any', function($app, array $config) {
-            return new AnyUserProvider($config['model']);
-        });
+        // Auth::provider('parse-any', function($app, array $config) {
+        //     return new AnyUserProvider($config['model']);
+        // });
 
-        // Register guard
-        Auth::extend('session-parse', function($app, $name, array $config) {
-            $guard = new SessionGuard($name, Auth::createUserProvider($config['provider']), $app['session.store']);
+        // // Register guard
+        // Auth::extend('session-parse', function($app, $name, array $config) {
+        //     $guard = new SessionGuard($name, Auth::createUserProvider($config['provider']), $app['session.store']);
 
-            $guard->setCookieJar($this->app['cookie']);
-            $guard->setDispatcher($this->app['events']);
-            $guard->setRequest($this->app->refresh('request', $guard, 'setRequest'));
+        //     $guard->setCookieJar($this->app['cookie']);
+        //     $guard->setDispatcher($this->app['events']);
+        //     $guard->setRequest($this->app->refresh('request', $guard, 'setRequest'));
 
-            return $guard;
-        });
+        //     return $guard;
+        // });
     }
 
     /**

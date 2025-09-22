@@ -3,6 +3,7 @@
 namespace Parziphal\Parse\Test;
 
 use Parse\ParseObject;
+use Parse\ParseUser;
 use PHPUnit\Framework\TestCase;
 use Parziphal\Parse\ObjectModel;
 use Parziphal\Parse\Test\Models\Post;
@@ -135,4 +136,27 @@ class ModelTest extends TestCase
 
         $this->assertSame(2, $user->posts->count());
     }
+
+    public function testLogin()
+    {
+        $user = ParseUser::logIn("my_username", "my_password");
+        // $this->p
+        $this->assertNotNull($user);
+
+        $post = Post::all();
+        $this->assertNotNull($post);
+        // ObjectModel::logout();
+
+        // $this->expectException(ModelNotFoundException::class);
+
+        // User::findOrFail($user->id);
+
+        // $loggedIn = User::login('test', 'test1234');
+
+        // $this->assertSame($user->id, $loggedIn->id);
+
+        // $fetched = User::findOrFail($user->id);
+
+        // $this->assertSame($user->id, $fetched->id);
+    }   
 }
