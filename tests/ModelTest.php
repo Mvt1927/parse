@@ -143,8 +143,7 @@ class ModelTest extends TestCase
         // $this->p
         $this->assertNotNull($user);
 
-        $post = Post::;
-        // new ParseObject("a")::find('aad')
+        $post = Post::all();
         $this->assertNotNull($post);
         // ObjectModel::logout();
 
