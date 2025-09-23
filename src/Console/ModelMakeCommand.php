@@ -29,6 +29,17 @@ class ModelMakeCommand extends GeneratorCommand
     protected $type = 'ObjectModel';
 
     /**
+     * Get the default namespace for the class.
+     *
+     * @param string $rootNamespace
+     * @return string
+     */
+    protected function getDefaultNamespace($rootNamespace)
+    {
+        return $rootNamespace . '\\Models\\Parse';
+    }
+    
+    /**
      * Get the stub file for the generator.
      *
      * @return string

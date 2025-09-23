@@ -21,6 +21,26 @@ use Illuminate\Contracts\Support\Arrayable;
 use Parziphal\Parse\Relations\HasManyArray;
 use Parziphal\Parse\Relations\BelongsToMany;
 
+/**
+ * @method static Query                 where($column, $operator = null, $value = null)
+ * @method static ObjectModel|null      find(string $objectId, $selectKeys = null)
+ * @method static Collection            get(string|string[] $selectKeys = null)
+ * @method static ObjectModel|null      first($selectKeys = null)
+ * @method static ObjectModel           firstOrFail($selectKeys = null)
+ * @method static int                   count()
+ * @method static Query                 orderBy($key, $order = 1)
+ * @method static Query                 whereIn($key, $values)
+ * @method static ObjectModel           findOrFail(string $objectId, $selectKeys = null)
+ * @method static object|ObjectModel    findOrNew(string $objectId, $selectKeys = null)
+ * @method static ObjectModel           firstOrNew(array $data)
+ * @method static ObjectModel           firstOrCreate(array $data)
+ * @method static Query                 matchesQuery(string $key, Query|ParseQuery $query)
+ * @method static Query                 doesNotMatchQuery(string $key, Query|ParseQuery $query)
+ * @method static Query                 matchesKeyInQuery(string $key, string $queryKey, Query|ParseQuery $query)
+ * @method static Query                 doesNotMatchKeyInQuery(string $key, string $queryKey, Query|ParseQuery $query)
+ * @method static Query                 containedIn(string $key, array $values)
+ * @method static Query                 with(array|string $keys)
+ */
 abstract class ObjectModel implements Arrayable, Jsonable, JsonSerializable
 {
     protected static $parseClassName;
