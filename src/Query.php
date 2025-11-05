@@ -538,18 +538,14 @@ class Query
      */
     public function paginate($perPage = 15, $selectKeys = null, $pageName = 'page', $page = null)
     {
-        if ($page === null) {
-            $page = isset($_GET[$pageName]) ? (int) $_GET[$pageName] : 1;
-        }
-
-        $page = max(1, (int) $page);
+        $page = $page ?: Paginator::resolveCurrentPage($pageName);
 
         // Clone parseQuery for counting so we don't affect the main query
         $countQuery = clone $this->parseQuery;
 
         $total = $countQuery->count($this->useMasterKey);
 
-        $itemsQuery = clone $this->parseQuery;
+        $itemsQuery = $this->parseQuery;
         $itemsQuery->limit($perPage);
         $itemsQuery->skip(($page - 1) * $perPage);
 
