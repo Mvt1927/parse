@@ -51,7 +51,7 @@ class SessionStorage implements ParseStorageInterface
      */
     public function clear()
     {
-        Sessions::clear();
+        Session::clear();
     }
 
     /**

@@ -8,6 +8,8 @@ use Parse\ParseQuery;
 use Parse\ParseObject;
 use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 
 class Query
 {
@@ -447,6 +449,25 @@ class Query
     }
 
     /**
+     * Apply the given callback if the value is truthy.
+     *
+     * @param mixed $value
+     * @param \Closure $callback
+     * @param \Closure|null $default
+     * @return $this
+     */
+    public function when($value, Closure $callback, ?Closure $default = null)
+    {
+        if ($value) {
+            $callback($this, $value);
+        } elseif ($default) {
+            $default($this, $value);
+        }
+
+        return $this;
+    }
+
+    /**
      * ObjectModels are replaced for their ParseObjects. It also accepts any kind
      * of traversable variable.
      *
@@ -484,10 +505,11 @@ class Query
      *
      * @return $this
      */
-    public function with($keys)
+    public function with(...$keys)
     {
-        if (is_string($keys)) {
-            $keys = func_get_args();
+        // Allow passing a single array or multiple string arguments
+        if (count($keys) === 1 && is_array($keys[0])) {
+            $keys = $keys[0];
         }
 
         $this->includeKeys = array_merge($this->includeKeys, $keys);
@@ -503,6 +525,85 @@ class Query
     public function getParseQuery()
     {
         return $this->parseQuery;
+    }
+
+    /**
+     * Paginate the query results with a length-aware paginator.
+     *
+     * @param int $perPage
+     * @param mixed $selectKeys
+     * @param string $pageName
+     * @param int|null $page
+     * @return LengthAwarePaginator
+     */
+    public function paginate($perPage = 15, $selectKeys = null, $pageName = 'page', $page = null)
+    {
+        if ($page === null) {
+            $page = isset($_GET[$pageName]) ? (int) $_GET[$pageName] : 1;
+        }
+
+        $page = max(1, (int) $page);
+
+        // Clone parseQuery for counting so we don't affect the main query
+        $countQuery = clone $this->parseQuery;
+
+        $total = $countQuery->count($this->useMasterKey);
+
+        $itemsQuery = clone $this->parseQuery;
+        $itemsQuery->limit($perPage);
+        $itemsQuery->skip(($page - 1) * $perPage);
+
+        if ($selectKeys) {
+            $itemsQuery->select($selectKeys);
+        }
+
+        $objects = $itemsQuery->find($this->useMasterKey);
+
+        $items = $this->createModels($objects);
+
+        $paginator = new LengthAwarePaginator($items, $total, $perPage, $page, [
+            'path' => Paginator::resolveCurrentPath(),
+            'pageName' => $pageName,
+        ]);
+
+        return $paginator;
+    }
+
+    /**
+     * Simple pagination without total count.
+     *
+     * @param int $perPage
+     * @param mixed $selectKeys
+     * @param string $pageName
+     * @param int|null $page
+     * @return Paginator
+     */
+    public function simplePaginate($perPage = 15, $selectKeys = null, $pageName = 'page', $page = null)
+    {
+        if ($page === null) {
+            $page = isset($_GET[$pageName]) ? (int) $_GET[$pageName] : 1;
+        }
+
+        $page = max(1, (int) $page);
+
+        $itemsQuery = clone $this->parseQuery;
+        $itemsQuery->limit($perPage);
+        $itemsQuery->skip(($page - 1) * $perPage);
+
+        if ($selectKeys) {
+            $itemsQuery->select($selectKeys);
+        }
+
+        $objects = $itemsQuery->find($this->useMasterKey);
+
+        $items = $this->createModels($objects);
+
+        $paginator = new Paginator($items, $perPage, $page, [
+            'path' => Paginator::resolveCurrentPath(),
+            'pageName' => $pageName,
+        ]);
+
+        return $paginator;
     }
 
     protected function createModel(ParseObject $data)

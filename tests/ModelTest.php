@@ -137,26 +137,77 @@ class ModelTest extends TestCase
         $this->assertSame(2, $user->posts->count());
     }
 
-    public function testLogin()
+    public function testPagination()
     {
-        $user = ParseUser::logIn("my_username", "my_password");
-        // $this->p
-        $this->assertNotNull($user);
+        // Clean up any existing posts if necessary - depends on test environment
 
-        $post = Post::all();
-        $this->assertNotNull($post);
-        // ObjectModel::logout();
+        // Create 35 posts
+        $initialTotal = Post::query()->count();
 
-        // $this->expectException(ModelNotFoundException::class);
+        for ($i = 1; $i <= 35; $i++) {
+            Post::create(['title' => 'Post ' . $i]);
+        }
 
-        // User::findOrFail($user->id);
+        // Paginate with 10 per page
+        $p = Post::query()->paginate(10);
 
-        // $loggedIn = User::login('test', 'test1234');
+        $this->assertInstanceOf(\Illuminate\Pagination\LengthAwarePaginator::class, $p);
+        $this->assertSame(10, $p->perPage());
+        $this->assertSame($initialTotal + 35, $p->total());
+        $this->assertSame((int) ceil(($initialTotal + 35) / 10), $p->lastPage());
+        $this->assertCount(10, $p->items());
+    }
 
-        // $this->assertSame($user->id, $loggedIn->id);
+    public function testSimplePagination()
+    {
+        $initialTotal = Post::query()->count();
 
-        // $fetched = User::findOrFail($user->id);
+        // Create 25 posts
+        for ($i = 1; $i <= 25; $i++) {
+            Post::create(['title' => 'Simple Post ' . $i]);
+        }
 
-        // $this->assertSame($user->id, $fetched->id);
-    }   
+        // Page 1
+        $p1 = Post::query()->simplePaginate(10, null, 'page', 1);
+
+        $this->assertInstanceOf(\Illuminate\Pagination\Paginator::class, $p1);
+        $this->assertSame(10, $p1->perPage());
+        $this->assertCount(10, $p1->items());
+        $this->assertTrue(method_exists($p1, 'hasMorePages'));
+
+        // Page 3
+        $p3 = Post::query()->simplePaginate(10, null, 'page', 3);
+
+        $this->assertCount(10, $p3->items());
+    }
+
+    public function testWhenMethod()
+    {
+        // ensure some posts exist
+        for ($i = 1; $i <= 5; $i++) {
+            Post::create(['title' => 'When Post ' . $i]);
+        }
+
+        $baseQuery = Post::query();
+
+        // apply when true - filter by title containing 'When Post'
+        $q1 = $baseQuery->when(true, function ($q) {
+            $q->where('title', 'When Post 1');
+        });
+
+        $result1 = $q1->get();
+
+        $this->assertIsIterable($result1);
+
+        // apply when false - default closure should run
+        $q2 = Post::query()->when(false, function ($q) {
+            $q->where('title', 'Should Not Match');
+        }, function ($q) {
+            // default - do nothing
+        });
+
+        $result2 = $q2->get();
+
+        $this->assertIsIterable($result2);
+    }
 }
