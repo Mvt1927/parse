@@ -10,6 +10,7 @@ use Parziphal\Parse\Test\Models\Post;
 use Parziphal\Parse\Test\Models\User;
 use Parziphal\Parse\Test\Models\Category;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use PHPUnit\Framework\Assert;
 
 class ModelTest extends TestCase
 {
@@ -149,7 +150,8 @@ class ModelTest extends TestCase
         }
 
         // Paginate with 10 per page
-        $p = Post::query()->paginate(10);
+        $p = Post::query()->with('categories', 'user')->paginate(10, ['*'], 'page');
+        Assert::fail(print_r($p, true));
 
         $this->assertInstanceOf(\Illuminate\Pagination\LengthAwarePaginator::class, $p);
         $this->assertSame(10, $p->perPage());
