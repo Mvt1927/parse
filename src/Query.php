@@ -284,7 +284,8 @@ class Query
      */
     public function first($selectKeys = null)
     {
-        if ($selectKeys) {
+        // Treat '*' or ['*'] as a wildcard (no-op) to avoid passing it to Parse SDK
+        if ($selectKeys !== null && $selectKeys !== '*' && $selectKeys !== ['*']) {
             $this->parseQuery->select($selectKeys);
         }
 
@@ -370,7 +371,8 @@ class Query
      */
     public function get($selectKeys = null)
     {
-        if ($selectKeys) {
+        // Treat '*' or ['*'] as a wildcard (no-op) to avoid passing it to Parse SDK
+        if ($selectKeys !== null && $selectKeys !== '*' && $selectKeys !== ['*']) {
             $this->select($selectKeys);
         }
 
@@ -514,7 +516,14 @@ class Query
 
         $this->includeKeys = array_merge($this->includeKeys, $keys);
 
-        $this->parseQuery->includeKey($keys);
+        // ParseQuery::includeKey expects a string; call once per key
+        if (is_array($keys)) {
+            foreach ($keys as $k) {
+                $this->parseQuery->includeKey($k);
+            }
+        } else {
+            $this->parseQuery->includeKey($keys);
+        }
 
         return $this;
     }
@@ -549,7 +558,8 @@ class Query
         $itemsQuery->limit($perPage);
         $itemsQuery->skip(($page - 1) * $perPage);
 
-        if ($selectKeys) {
+        // Treat '*' or ['*'] as a wildcard (no-op) to avoid passing it to Parse SDK
+        if ($selectKeys !== null && $selectKeys !== '*' && $selectKeys !== ['*']) {
             $itemsQuery->select($selectKeys);
         }
 
@@ -576,17 +586,14 @@ class Query
      */
     public function simplePaginate($perPage = 15, $selectKeys = null, $pageName = 'page', $page = null)
     {
-        if ($page === null) {
-            $page = isset($_GET[$pageName]) ? (int) $_GET[$pageName] : 1;
-        }
-
-        $page = max(1, (int) $page);
+        $page = $page ?: Paginator::resolveCurrentPage($pageName);
 
         $itemsQuery = clone $this->parseQuery;
         $itemsQuery->limit($perPage);
         $itemsQuery->skip(($page - 1) * $perPage);
 
-        if ($selectKeys) {
+        // Treat '*' or ['*'] as a wildcard (no-op) to avoid passing it to Parse SDK
+        if ($selectKeys !== null && $selectKeys !== '*' && $selectKeys !== ['*']) {
             $itemsQuery->select($selectKeys);
         }
 
