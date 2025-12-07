@@ -442,9 +442,9 @@ class Query
     public function orderBy($key, $order = 1)
     {
         if ($order == 1) {
-            $this->ascending($key);
+            $this->parseQuery->ascending($key);
         } else {
-            $this->descending($key);
+            $this->parseQuery->descending($key);
         }
 
         return $this;
@@ -607,6 +607,94 @@ class Query
         ]);
 
         return $paginator;
+    }
+
+    /**
+     * Chunk the results by primary key to avoid loading too much data into memory.
+     *
+     * @param int $count
+     * @param \Closure $callback
+     * @param string $column
+     * @param string|null $alias
+     * @return bool
+     */
+    public function chunkById($count, Closure $callback, $column = 'objectId', $alias = null)
+    {
+        $lastId = null;
+
+        do {
+            $query = clone $this->parseQuery;
+
+            // apply ordering by the id column
+            $query->ascending($column);
+
+            if ($lastId) {
+                $query->greaterThan($column, $lastId);
+            }
+
+            // If an alias is provided, ensure the underlying column is selected
+            // so we can read its value even if the developer used a select earlier.
+            if ($alias !== null && $alias !== $column) {
+                try {
+                    $query->select([$column]);
+                } catch (\Throwable $e) {
+                    // ignore: Parse SDK may throw if select is incompatible; rely on existing selection
+                }
+            }
+
+            $query->limit($count);
+
+            $objects = $query->find($this->useMasterKey);
+
+            $models = $this->createModels($objects);
+
+            if ($models->isEmpty()) {
+                break;
+            }
+
+            // Call the callback with the current chunk. If it returns false, stop.
+            $continue = $callback($models);
+
+            if ($continue === false) {
+                return false;
+            }
+
+            // Set lastId to the last model's id (respecting alias) for next iteration
+            $last = $models->last();
+
+            $lastId = null;
+
+            if ($alias !== null) {
+                // Try reading the alias attribute from the model
+                if (is_object($last) && (property_exists($last, $alias) || method_exists($last, '__get') || method_exists($last, $alias))) {
+                    try {
+                        $val = $last->{$alias};
+                        if ($val !== null) {
+                            $lastId = $val;
+                        }
+                    } catch (\Throwable $e) {
+                        // ignore and fallback
+                    }
+                }
+            }
+
+            if ($lastId === null) {
+                // Fallbacks: Prefer object id when ordering by objectId
+                if ($column === 'objectId' && is_object($last) && method_exists($last, 'id')) {
+                    $lastId = $last->id();
+                } else {
+                    // try reading the column as attribute
+                    try {
+                        $lastId = is_object($last) ? $last->{$column} : null;
+                    } catch (\Throwable $e) {
+                        $lastId = null;
+                    }
+                }
+            }
+
+        } while ($models->count() == $count);
+
+        return true;
     }
 
     protected function createModel(ParseObject $data)
