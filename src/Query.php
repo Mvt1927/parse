@@ -441,11 +441,13 @@ class Query
 
     public function orderBy($key, $order = 1)
     {
-        if ($order == 1) {
-            $this->parseQuery->ascending($key);
-        } else {
-            $this->parseQuery->descending($key);
-        }
+        $check = is_string($order) ? strtolower($order) : $order;
+
+        match ($check) {
+            1, 'asc', 'ascending' => $this->parseQuery->ascending($key),
+            0, 'desc', 'descending' => $this->parseQuery->descending($key),
+            default => null, // Hoặc log lỗi nếu muốn
+        };
 
         return $this;
     }
